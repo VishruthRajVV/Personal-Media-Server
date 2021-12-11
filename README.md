@@ -523,4 +523,4 @@ Since Static IP is not something everybody uses you can use a service called noi
 
 noip.com creates a link for you which auto updates the IP of your server/device automatically without you needing to do anything.
 
-noip.com has a clear step-by-step process of how to set up their service in their website. Please refer to their website to the same.
+noip.com has a clear step-by-step process of how to set up their service in their website. Please refer to their website for the same.
