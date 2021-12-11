@@ -513,9 +513,11 @@ Open up the Adguard home setup on YOUR_SERVER_IP:3000.
 
 Enable the default filter list from filters→DNS blocklist. You can then add custom filters.
 
-# Content Access outside Localnetwork
+# Content Access outside Local Network
 
-To access the contents on the Server outside your localnetwork Port-Forward the Media Management application (jellyfin/Plex) to an open port or you can port-forward the same existing port.
+To access the contents outside your local network Port-Forward the Media Management application (jellyfin/Plex) to an open port or you can port-forward the same existing port.
+
+Port-Forwarding can be done from your Router's Gateway. Refer to the back side of your router for the gateway address. (common router gateway address is 192.168.1.1)
 
 Since Static IP is not something everybody uses you can use a service called noip from here: https://noip.com
 
