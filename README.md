@@ -1,11 +1,11 @@
 # Personal Media Server
-A complete guide to building your own personal self hosted server for streaming and ad-blocking (Bonus) for all your devices.
+A complete guide to building your own personal self-hosted server for streaming and ad-blocking (Bonus) for all your devices.
 
 You don't need powerful hardware to set this up. I use an old core 2 duo computer. Raspberry pi would be preferred to make your life easier.
 
 I am using Ubuntu Desktop in this guide. You can use any Linux Distribution, the steps are not that different.
 
-You can Download ubuntu desktop from https://ubuntu.com/download/desktop or ubuntu server from https://ubuntu.com/download/server. Create a bootable USB drive using rufus. Plug the usb on your computer, and select the usb drive from the boot menu and install ubuntu server. Follow the steps to install and configure ubuntu, but ensure you do not install docker during the setup. Ubuntu Snap uses an often outdated version of docker that we want to avoid.
+You can Download Ubuntu desktop from https://ubuntu.com/download/desktop or Ubuntu server from https://ubuntu.com/download/server. Create a bootable USB drive using Rufus. Plug the usb on your computer, and select the usb drive from the boot menu and install Ubuntu server. Follow the steps to install and configure Ubuntu, but ensure you do not install Docker during the setup. Ubuntu Snap uses an often outdated version of Docker that we want to avoid.
 
 Also make sure "Install OpenSSH server" is checked or you will not be able to access the machine remotely.
 Once installation finishes you can now reboot and connect to your machine remotely using ssh.
@@ -84,6 +84,8 @@ As mentioned above all compose files contain a version string and a services obj
         services:
        
 Save the following content to the docker-compose.yml file. 
+
+** After setting up the server DO NOT forget to set up a VPN for your Torrent Downloads. You can refer to how here: https://haugene.github.io/docker-transmission-openvpn/ **
 
 # Jackett
 
@@ -240,10 +242,9 @@ You can use ombi only if you don't plan to install plex.
           - '5055:5055'
         restart: unless-stopped
         
-Qbittorrent - Torrent downloader
+# Qbittorrent - Torrent downloader
 
-I use qflood
-container. Flood provides a nice UI and this image automatically manages the connection between qbittorrent and flood.
+I use qflood container. Flood provides a nice UI and this image automatically manages the connection between qbittorrent and flood.
 
 Qbittorrent only needs access to torrent directory, and not the complete data directory.
 
@@ -264,7 +265,7 @@ Qbittorrent only needs access to torrent directory, and not the complete data di
               - '/home/${USER}/server/torrents:/data/torrents'
             restart: unless-stopped
 
-Heimdall - Dashboard
+# Heimdall - Dashboard
 
 There are multiple dashboard applications but I use Heimdall.
 
@@ -283,11 +284,11 @@ There are multiple dashboard applications but I use Heimdall.
 
 # Transcoding
 
-As I mentioned in the jellyfin section there is a section in the conmpose file as "devices". It is used for transcoding. If you don't include that section, whenever transcoding happens it will only use CPU. In order to utilise your gpu the devices must be passed on to the container.
+As I mentioned in the jellyfin section there is a section in the compose file as "devices". It is used for transcoding. If you don't include that section, whenever transcoding happens it will only use CPU. In order to utilise your gpu the devices must be passed on to the container.
 
 I am using CPU-only transcoding as I the PC I am using does not have an independent GPU.
 
-## CPU-only Transcoding
+# CPU-only Transcoding
 
         plex:
             image: linxuserver/plex
@@ -309,7 +310,7 @@ Read up this guide to setup hardware acceleration for your gpu.
 
 Generally, the devices are same for intel gpu transcoding.
 
-## Intel GPU Transcoding
+# Intel GPU Transcoding
 
 In order for Intel GPU transcoding to work, additionally install the intel-gpu-tools package, which will include both a command for monitoring our GPU's usage, and the underlying driver that makes it possible to use the GPU as a standalone device.
 
@@ -335,7 +336,7 @@ Afterwards, add the entry:
                 - 32400:32400
             restart: unless-stopped
 
-## NVIDIA GPU Transcoding
+# NVIDIA GPU Transcoding
 
 NVIDIA is the most complicated process of the bunch, but is still doable in docker. First, download the Linux drivers for your GPU from the official NVIDIA drivers page. After clicking search and the first download button, when you get to the last page that contains the text "This download includes the NVIDIA graphics driver" right-click the "DOWNLOAD" button and copy the link. Then, in your Linux server machine, run the following commands:
 
@@ -379,10 +380,145 @@ Finally, we can add the following to our docker-compose.yml file
                 - 32400:32400
             restart: unless-stopped
             
-# Running and configuring the docker stack
+# Running the docker stack
 
 Once the file has been built, we can start everything with one command while in the same folder as our docker-compose.yml file:
 
         docker-compose up -d
      
 
+# Configuring the docker stack
+
+# Jackett
+
+Jackett is only as good as the trackers you have added to it. Navigate to http://serverIP:9117 where serverIP is the IP address or local hostname of the Linux server.
+
+Add a few indexers using the "add indexer" button. It may feel like a good idea to add a lot, but that increases search times for every single search.
+
+# Qbittorrent
+
+Navigate to YOUR_SERVER_IP:8080
+
+The default username is admin and password adminadmin. You can change the user and password by going to Tools → Options → WebUI
+
+Change "Default Save Path" in WebUI section to /data/torrents/ and "Keep incomplete torrents in" to /data/torrents/incomplete/
+
+Create categories by right clicking on sidebar under category. Type category as TV and path as tv. Path needs to be same as the folder you created to store your media. Similarly, for movies type Movies as category and path as movies. This will enable to automatically move the media to its correct folder.
+
+# Sonarr
+
+Navigate to YOUR_SERVER_IP:8989
+
+Under "Download Clients" add qbittorrent. Enter the host as YOUR_SERVER_IP port as **8080,** and the username and password you used for qbittorrent. In category type TV (or whatever you selected as category name(not path) on qbittorent). Test the connection and then save.
+
+Under indexers, for each indexer you added in Jackett
+
+Click on add button
+
+Select Torzab
+
+Copy the tornzab feed for the indexer from jackett
+
+Copy the api key from jackett
+
+Select the categories you want
+
+Test and save
+
+Under general, define the root folder as /data/media/tv
+
+Repeat this process for Radarr, Lidarr and readarr.
+
+Use /data/media/movies as root for Radarr and so on.
+
+The setup for ombi/overseerr is super simple. Just hit the url and follow the on screen instructions.
+
+# Bazarr
+
+Navigate to YOUR_SERVER_IP:6767
+
+Go to settings and then sonarr. Enter the host as YOUR_SERVER_IP port as 8989. Copy the api key from sonarr settings→general.
+
+Similarly, for radarr enter the host as YOUR_SERVER_IP port as 7878. Copy the api key from radarr settings→general.
+
+# Jellyfin
+
+Go to YOUR_SERVER_IP:8096
+
+Add all the libraries by selecting content type and then giving a name for that library. Select the particular library location from /data/media. Repeat this for movies, tv, music, books and audiobooks.
+
+Go to dashboard→playback, and enable transcoding by selecting as VAAPI and enter the device as /dev/dri/renderD128
+
+Monitor GPU usage while playing content using
+
+sudo intel_gpu_top
+
+# Heimdall
+
+Navigate to YOUR_SERVER_IP:8090
+
+Setup all the services you use so you don't need to remember the ports like I showed in the first screenshot.
+
+
+# BONUS
+
+# Firewall
+
+Firewalls are always a good idea, even on an internal network. Ubuntu comes built in with "ufw" or "universal firewall". The following commands will allow you to continue accessing your server, but block any nasty connections you don't intend to have happen (copy the whole thing).
+
+sudo ufw allow 22/tcp \
+&& sudo ufw allow 7878/tcp \
+&& sudo ufw allow 8989/tcp \
+&& sudo ufw allow 9091/tcp \
+&& sudo ufw allow 32400/tcp \
+&& sudo ufw allow 32400/udp \
+&& sudo ufw enable
+
+Press y to confirm the changes and the firewall will be online.
+
+# Adguard
+
+AdGuard Home is a network-wide software for blocking ads & tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that. 
+
+Setup Adguard home in a new compose file.
+
+Create a directory for keeping the compose files.
+
+        mkdir ~/server/compose/adguard-home
+        vi ~/server/compose/adguard-home/docker-compose.yml
+
+Save the following content to the docker-compose.yml file. (https://hub.docker.com/r/adguard/adguardhome)
+
+        version: '3.3'
+        services:
+            run:
+                container_name: adguardhome
+                restart: unless-stopped
+                volumes:
+                    - '/home/${USER}/server/configs/adguardhome/workdir:/opt/adguardhome/work'
+                    - '/home/${USER}/server/configs/adguardhome/confdir:/opt/adguardhome/conf'
+                ports:
+                    - '53:53/tcp'
+                    - '53:53/udp'
+                    - '67:67/udp'
+                    - '68:68/udp'
+                    - '68:68/tcp'
+                    - '80:80/tcp'
+                    - '443:443/tcp'
+                    - '443:443/udp'
+                    - '3000:3000/tcp'
+                image: adguard/adguardhome
+                
+Open up the Adguard home setup on YOUR_SERVER_IP:3000.
+
+Enable the default filter list from filters→DNS blocklist. You can then add custom filters.
+
+# Content Access outside Localnetwork
+
+To access the contents on the Server outside your localnetwork Port-Forward the Media Management application (jellyfin/Plex) to an open port or you can port-forward the same existing port.
+
+Since Static IP is not something everybody uses you can use a service called noip from here: https://noip.com
+
+noip.com creates a link for you which auto updates the IP of your server/device automatically without you needing to do anything.
+
+noip.com has a clear step-by-step process of how to set up their service in their website. Please refer to their website to the same.
